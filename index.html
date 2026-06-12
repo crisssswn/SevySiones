@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEVY SIONES - Revista Educativa</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+
+    <!-- ✅ FIREBASE SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        /* --- ESTILOS GLOBALES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #fcfaf8; color: #2b2b2b; font-family: 'Poppins', sans-serif; line-height: 1.6; }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+        header {
+            background: #ffffff; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; border-bottom: 3px solid #ff9800;
+        }
+
+        /* --- LOGO Y TÍTULO --- */
+        .logo-container { display: flex; align-items: center; gap: 20px; }
+        .logo-img { width: 70px; height: auto; border-radius: 10px; cursor: pointer; }
+        .collage-title { display: flex; gap: 4px; font-family: 'Permanent Marker', cursive; font-size: 26px; text-transform: uppercase; cursor: pointer; }
+        .collage-title span { display: inline-block; padding: 5px 12px; color: #fff; box-shadow: 2px 3px 6px rgba(0,0,0,0.2); border: 2px dashed rgba(255,255,255,0.5); }
+        .c1 { background: #e91e63; transform: rotate(-6deg); } .c2 { background: #ff9800; transform: rotate(4deg); color: #2b2b2b; }
+        .c3 { background: #4caf50; transform: rotate(-3deg); } .c4 { background: #2196f3; transform: rotate(5deg); }
+        .espacio { width: 15px; background: transparent; box-shadow: none; border: none; }
+        .c5 { background: #9c27b0; transform: rotate(-5deg); } .c6 { background: #f44336; transform: rotate(2deg); }
+        .c7 { background: #00bcd4; transform: rotate(-4deg); } .c8 { background: #8bc34a; transform: rotate(6deg); color: #2b2b2b; }
+        .c9 { background: #ffeb3b; transform: rotate(-2deg); color: #2b2b2b; } .c10 { background: #ff5722; transform: rotate(4deg); }
+
+        /* --- MENÚ Y BOTONES --- */
+        .menu { display: flex; gap: 15px; align-items: center; }
+        .menu button { padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600; transition: all 0.3s ease; }
+        .login-btn { background: #fff; color: #2196f3; border: 2px solid #2196f3; } .login-btn:hover { background: #2196f3; color: white; }
+        .register-btn { background: #ff9800; color: white; border: 2px solid #ff9800; } .register-btn:hover { background: #e68a00; }
+        .logout-btn { background: #f44336; color: white; display: none; }
+        .user-greeting { font-weight: 600; color: #4caf50; display: none; }
+
+        .contenedor-global { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+
+        /* --- VISTA PRINCIPAL --- */
+        #vista-principal { display: grid; grid-template-columns: 2.5fr 1fr; gap: 40px; margin-bottom: 50px; }
+        .portada-container { width: 100%; border-radius: 10px; overflow: hidden; box-shadow: 0 15px 30px rgba(0,0,0,0.15); margin-bottom: 20px; }
+        .portada { width: 100%; display: block; object-fit: cover; max-height: 500px; }
+
+        .botones-secciones { display: flex; gap: 20px; margin-bottom: 30px; }
+        .btn-juego { background: #9c27b0; color: white; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: 600; flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px; transition: transform 0.2s; }
+        .btn-juego:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(156, 39, 176, 0.3); }
+
+        .preview-noticia { display: flex; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.3s ease; gap: 20px; align-items: center; border-left: 5px solid #d32f2f; }
+        .preview-noticia:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .preview-texto { flex: 1; }
+        .preview-etiqueta { color: #e91e63; font-size: 14px; font-weight: 600; text-transform: uppercase; margin-bottom: 10px; display: inline-block; }
+        .preview-texto h2 { font-size: 24px; color: #d32f2f; margin-bottom: 15px; text-decoration: underline; text-decoration-color: #d32f2f; text-underline-offset: 4px; }
+        .preview-img { width: 200px; height: 200px; object-fit: cover; border-radius: 8px; }
+
+        /* --- SIDEBAR DERECHO --- */
+        .sidebar-revista { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .sidebar-revista h3 { text-align: center; color: #ff9800; margin-bottom: 15px; font-size: 24px; }
+        .sidebar-revista p { text-align: center; color: #555; font-size: 14px; margin-bottom: 20px; }
+
+        .grid-equipo-sidebar { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .miembro-card { background: #f9f9f9; padding: 20px; border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.3s ease; border-bottom: 4px solid transparent; }
+        .miembro-card:hover { transform: translateY(-10px); background: #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-bottom: 4px solid #e91e63; }
+        .miembro-icon { font-size: 40px; color: #e91e63; margin-bottom: 15px; }
+        .miembro-card h4 { font-size: 18px; color: #333; margin-bottom: 5px; }
+        .miembro-card span { font-size: 13px; color: #ff9800; font-weight: 600; text-transform: uppercase; }
+
+        /* --- SECCIÓN INFERIOR --- */
+        .seccion-inferior-equipo { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .seccion-inferior-equipo h2 { text-align: center; font-size: 30px; margin-bottom: 10px; color: #333; }
+        .seccion-inferior-equipo > p { text-align: center; color: #666; max-width: 800px; margin: 0 auto 30px auto; }
+
+        /* --- VISTA DE ENTREVISTA --- */
+        #vista-entrevista { display: none; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); max-width: 900px; margin: 0 auto; }
+        .btn-volver { background: #f5f5f5; color: #333; padding: 10px 20px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; font-weight: 600; margin-bottom: 30px; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
+        .btn-volver:hover { background: #e0e0e0; }
+        .video-container { width: 100%; text-align: center; margin-bottom: 40px; background: #000; border-radius: 10px; overflow: hidden; }
+        video { width: 100%; max-height: 500px; outline: none; }
+
+        .qa-block { margin-bottom: 35px; }
+        .pregunta { font-size: 20px; color: #e91e63; margin-bottom: 12px; font-family: 'Playfair Display', serif; }
+        .respuesta { font-size: 16px; background: #f9f9f9; padding: 25px; border-radius: 8px; font-style: italic; border-left: 5px solid #4caf50; color: #444; line-height: 1.8; }
+
+        /* --- INTERACCIONES --- */
+        .interactivo-section { border-top: 2px solid #eee; padding-top: 30px; margin-top: 20px; }
+        .estrellas { background: #fff9c4; padding: 15px; border-radius: 15px; margin-bottom: 20px; display: inline-block; text-align: center; width: 100%; }
+        .estrellas button { background: none; border: none; font-size: 28px; cursor: pointer; transition: transform 0.2s; outline: none; }
+        .estrellas button:hover { transform: scale(1.3); }
+        textarea { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Poppins', sans-serif; resize: vertical; margin-bottom: 10px; font-size: 14px; }
+        textarea:focus { border-color: #2196f3; outline: none; box-shadow: 0 0 5px rgba(33, 150, 243, 0.3); }
+        .btn-publicar { background: #2196f3; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; width: 100%; transition: background 0.2s; }
+        .btn-publicar:hover { background: #1976d2; }
+        .btn-publicar:disabled { background: #90caf9; cursor: not-allowed; }
+        .comentario { background: #f5f5f5; padding: 15px; margin-top: 15px; border-radius: 8px; border-left: 3px solid #2196f3; font-size: 14px; color: #333; }
+        .comentario strong { color: #1976d2; }
+        .comentario-fecha { font-size: 11px; color: #aaa; margin-top: 6px; }
+        .cargando-comentarios { text-align: center; padding: 20px; color: #aaa; font-size: 14px; }
+
+        /* --- JUEGO SOPA DE LETRAS --- */
+        #vista-juego { display: none; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); max-width: 900px; margin: 0 auto; text-align: center; }
+        .sopa-container { display: flex; justify-content: center; gap: 40px; margin-top: 30px; flex-wrap: wrap; }
+        .grid-sopa { display: grid; grid-template-columns: repeat(10, 40px); gap: 5px; background: #f0f0f0; padding: 15px; border-radius: 10px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.1); width: fit-content; margin: 0 auto; }
+        .letra-box { width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; font-family: monospace; background: white; border-radius: 5px; cursor: pointer; user-select: none; transition: background 0.2s, transform 0.1s; }
+        .letra-box.seleccionada { background: #ff9800 !important; color: white !important; transform: scale(1.05); border: 2px solid #e68a00; }
+        .letra-box.encontrada { background: #4caf50 !important; color: white !important; transform: scale(1.05); border: 2px solid #388e3c; cursor: default; }
+        .lista-palabras { text-align: left; background: #e3f2fd; padding: 25px; border-radius: 10px; min-width: 220px; }
+        .lista-palabras h3 { color: #1976d2; margin-bottom: 15px; border-bottom: 2px solid #bbdefb; padding-bottom: 10px; }
+        .lista-palabras ul { list-style: none; padding: 0; }
+        .lista-palabras li { font-size: 18px; margin-bottom: 12px; color: #444; display: flex; align-items: center; gap: 10px; font-weight: 500; }
+        .btn-limpiar { background: #f44336; color: white; padding: 12px 20px; border: none; border-radius: 5px; margin-top: 25px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.2s; }
+        .btn-limpiar:hover { background: #d32f2f; }
+
+        /* --- MODALES --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 30px; width: 90%; max-width: 400px; border-radius: 15px; text-align: center; position: relative; }
+        .modal-content input { width: 100%; padding: 12px 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; }
+        .modal-content button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 10px; font-family: 'Poppins', sans-serif; }
+        .btn-green { background: #4caf50; color: white; } .btn-green:hover { background: #388e3c; }
+        .btn-blue  { background: #2196f3; color: white; } .btn-blue:hover  { background: #1976d2; }
+        .btn-close { background: #f5f5f5; color: #333; border: 1px solid #ddd !important; } .btn-close:hover { background: #e0e0e0; }
+
+        .img-perfil { width: 160px; height: 160px; object-fit: cover; border-radius: 50%; margin: 0 auto 20px auto; border: 5px solid #e91e63; display: block; box-shadow: 0 5px 15px rgba(233,30,99,0.3); }
+        .rol-perfil  { color: #e91e63; font-weight: bold; text-transform: uppercase; font-size: 15px; margin-bottom: 15px; letter-spacing: 1px; }
+        .desc-perfil { color: #555; text-align: justify; font-size: 15px; margin-bottom: 25px; line-height: 1.7; }
+
+        /* --- CÓMIC --- */
+        .comic-preview { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-top: 30px; border-left: 5px solid #ff9800; }
+        .comic-preview h3 { font-family: 'Playfair Display', serif; color: #e65100; font-size: 20px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+        .comic-preview img { width: 80%; border-radius: 8px; cursor: pointer; transition: transform 0.25s, box-shadow 0.25s; border: 2px solid #ffe0b2; display: block; }
+        .comic-preview img:hover { transform: scale(1.01); box-shadow: 0 10px 30px rgba(230,81,0,0.15); }
+        .comic-preview p { margin-top: 12px; font-size: 14px; color: #666; text-align: center; }
+        #modalComic .modal-content { max-width: 600px; width: 95%; padding: 20px; background: #1a1a1a; }
+        #modalComic .modal-content img { width: 80%; border-radius: 8px; display: block; }
+        #modalComic .btn-close { background: #ff9800; color: white; border: none !important; margin-top: 14px; }
+        #modalComic .btn-close:hover { background: #e65100; }
+
+        /* --- SEMÁFORO --- */
+        .semaforo-section { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-top: 30px; border-left: 5px solid #4caf50; }
+        .semaforo-section h3 { font-family: 'Playfair Display', serif; color: #2e7d32; font-size: 20px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+        .semaforo-section .semaforo-hint { font-size: 13px; color: #888; margin-bottom: 20px; }
+        .semaforo-layout { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+        .semaforo-img-wrap { position: relative; flex-shrink: 0; }
+        .semaforo-img-wrap img { width: 400px; border-radius: 10px; border: 2px solid #c8e6c9; display: block; }
+        .sz { position: absolute; left: 15%; width: 70%; border-radius: 50%; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
+        .sz:hover { opacity: 0.22; }
+        .sz-rojo     { top: 9%;  height: 24%; background: #f44336; }
+        .sz-amarillo { top: 36%; height: 24%; background: #ffc107; }
+        .sz-verde    { top: 63%; height: 24%; background: #4caf50; }
+        .semaforo-consejos { flex: 1; min-width: 220px; }
+        .consejo-bloque { display: none; border-radius: 10px; padding: 18px 20px; animation: fadeUp 0.3s ease; }
+        .consejo-bloque.activo { display: block; }
+        .consejo-bloque.rojo     { background: #fff3f3; border-left: 5px solid #f44336; }
+        .consejo-bloque.amarillo { background: #fffde7; border-left: 5px solid #ffc107; }
+        .consejo-bloque.verde    { background: #f1f8e9; border-left: 5px solid #4caf50; }
+        .consejo-bloque h4 { font-family: 'Playfair Display', serif; font-size: 16px; margin-bottom: 8px; }
+        .consejo-bloque.rojo     h4 { color: #c62828; }
+        .consejo-bloque.amarillo h4 { color: #f57f17; }
+        .consejo-bloque.verde    h4 { color: #2e7d32; }
+        .consejo-bloque p  { font-size: 14px; color: #444; line-height: 1.65; margin-bottom: 8px; }
+        .consejo-bloque ul { padding-left: 18px; }
+        .consejo-bloque ul li { font-size: 13px; color: #555; margin-bottom: 5px; line-height: 1.5; }
+        .semaforo-btns { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .semaforo-btns button { flex: 1; min-width: 80px; padding: 12px; border: none; border-radius: 20px; font-weight: 800; font-size: 13px; cursor: pointer; color: white; transition: transform 0.15s, box-shadow 0.15s; font-family: 'Poppins', sans-serif; }
+        .semaforo-btns button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
+        .btn-s-rojo     { background: #f44336; }
+        .btn-s-amarillo { background: #ffc107; color: #333 !important; }
+        .btn-s-verde    { background: #4caf50; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 900px) {
+            #vista-principal { grid-template-columns: 1fr; }
+            .grid-equipo-sidebar { grid-template-columns: repeat(2, 1fr); }
+            .sopa-container { flex-direction: column; align-items: center; }
+        }
+        @media (max-width: 500px) {
+            .grid-equipo-sidebar { grid-template-columns: 1fr; }
+            .preview-noticia { flex-direction: column; text-align: center; }
+            .preview-img { width: 100%; height: auto; }
+            .semaforo-img-wrap img { width: 150px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container" onclick="volverInicio()">
+        <img src="logo.jpeg" alt="Logo" class="logo-img">
+        <div class="collage-title">
+            <span class="c1">S</span><span class="c2">E</span><span class="c3">V</span><span class="c4">Y</span>
+            <span class="espacio"></span>
+            <span class="c5">S</span><span class="c6">I</span><span class="c7">O</span><span class="c8">N</span><span class="c9">E</span><span class="c10">S</span>
+        </div>
+    </div>
+    <div class="menu">
+        <span class="user-greeting" id="saludoUsuario"></span>
+        <button class="login-btn"    id="btn-login"    onclick="abrirLogin()">Iniciar Sesión</button>
+        <button class="register-btn" id="btn-registro" onclick="abrirRegistro()">Registrarse</button>
+        <button class="logout-btn"   id="btn-logout"   onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+</header>
+
+<div class="contenedor-global">
+
+    <!-- ===================== VISTA PRINCIPAL ===================== -->
+    <div id="vista-principal-contenedor">
+        <div id="vista-principal">
+
+            <div class="columna-izquierda">
+                <div class="portada-container">
+                    <img src="portada.jpeg" alt="Portada" class="portada">
+                </div>
+
+                <div class="botones-secciones">
+                    <button class="btn-juego" onclick="abrirJuego()">
+                        <i class="fa-solid fa-gamepad"></i> Zona Interactiva: Jugar Sopa de Letras
+                    </button>
+                </div>
+
+                <div class="preview-noticia" onclick="abrirEntrevista()">
+                    <div class="preview-texto">
+                        <span class="preview-etiqueta"><i class="fa-solid fa-circle" style="font-size:8px;color:red;"></i> Exclusiva SEVY</span>
+                        <h2>El Impacto de las Redes Sociales en los Jóvenes</h2>
+                        <p>El uso desmedido de las redes trae consigo consecuencias legales y psicológicas. Analizamos junto a un experto cómo influyen en la toma de decisiones.</p>
+                        <button style="background:none;border:none;color:#2196f3;font-weight:bold;cursor:pointer;margin-top:10px;font-size:16px;">Ver entrevista completa <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                    <img src="portada_entrevista.jpeg" alt="Miniatura" class="preview-img">
+                </div>
+
+                <!-- CÓMIC -->
+                <div class="comic-preview">
+                    <h3><i class="fa-solid fa-book-open"></i> Cómic: Cuidado con los chats</h3>
+                    <img src="comic.jpg" alt="Cómic" onclick="document.getElementById('modalComic').style.display='flex'" title="Haz clic para ver en grande">
+                    <p><i class="fa-solid fa-magnifying-glass-plus" style="color:#ff9800;"></i> Haz clic en la imagen para verla en grande</p>
+                </div>
+
+                <!-- SEMÁFORO -->
+                <div class="semaforo-section">
+                    <h3><i class="fa-solid fa-traffic-light"></i> Semáforo Emocional</h3>
+                    <p class="semaforo-hint">Haz clic en cada color del semáforo para recibir consejos sobre cómo manejar tus emociones.</p>
+                    <div class="semaforo-layout">
+                        <div>
+                            <div class="semaforo-img-wrap">
+                                <img src="SEMAFORO2.jpeg" alt="Semáforo emocional">
+                                <div class="sz sz-rojo"     onclick="verConsejo('rojo')"     title="ROJO – Para y respira"></div>
+                                <div class="sz sz-amarillo" onclick="verConsejo('amarillo')" title="AMARILLO – Piensa y elige"></div>
+                                <div class="sz sz-verde"    onclick="verConsejo('verde')"    title="VERDE – Actúa con calma"></div>
+                            </div>
+                            <div class="semaforo-btns">
+                                <button class="btn-s-rojo"     onclick="verConsejo('rojo')">🔴 PARA</button>
+                                <button class="btn-s-amarillo" onclick="verConsejo('amarillo')">🟡 ELIGE</button>
+                                <button class="btn-s-verde"    onclick="verConsejo('verde')">🟢 ACTÚA</button>
+                            </div>
+                        </div>
+                        <div class="semaforo-consejos">
+                            <div id="consejo-rojo" class="consejo-bloque rojo">
+                                <h4><i class="fa-solid fa-hand" style="margin-right:6px;"></i>🔴 PARA — Sientes enojo intenso</h4>
+                                <p>Tu cuerpo te avisa con señales físicas: corazón acelerado, tensión, ganas de gritar. <strong>Es la señal de frenar antes de actuar.</strong></p>
+                                <ul>
+                                    <li>Respira profundo: inhala 4 segundos, exhala 6.</li>
+                                    <li>Aléjate de la pantalla o del lugar por unos minutos.</li>
+                                    <li>Repite en voz baja: <em>"Estoy enojado/a, pero puedo manejarlo."</em></li>
+                                    <li>No respondas mensajes ni tomes decisiones en ese momento.</li>
+                                    <li>Escucha música que te relaje o sal a caminar.</li>
+                                </ul>
+                                <p style="margin-top:10px;"><em>El enojo es una emoción normal. Lo que importa es qué haces con él.</em></p>
+                            </div>
+                            <div id="consejo-amarillo" class="consejo-bloque amarillo">
+                                <h4><i class="fa-solid fa-lightbulb" style="margin-right:6px;"></i>🟡 ELIGE — Piensa antes de actuar</h4>
+                                <p>Ya te calmaste un poco. Ahora es el momento de <strong>reflexionar y elegir la mejor respuesta</strong>, no la primera que se te ocurra.</p>
+                                <ul>
+                                    <li>Pregúntate: <em>¿Por qué me enojé realmente? ¿Qué necesito?</em></li>
+                                    <li>¿Cuál sería la consecuencia de lo que quiero hacer?</li>
+                                    <li>Escribe lo que sientes en un papel, sin enviarlo a nadie.</li>
+                                    <li>Habla con alguien de confianza antes de responder.</li>
+                                    <li>Recuerda: pelear no es la única solución, <strong>el diálogo también existe.</strong></li>
+                                </ul>
+                                <p style="margin-top:10px;"><em>Las decisiones tomadas con calma casi siempre son mejores.</em></p>
+                            </div>
+                            <div id="consejo-verde" class="consejo-bloque verde">
+                                <h4><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>🟢 ACTÚA — Con cabeza fría</h4>
+                                <p>Pensaste y elegiste. Ahora puedes actuar de forma asertiva. <strong>Hablar con respeto es una muestra de fortaleza, no de debilidad.</strong></p>
+                                <ul>
+                                    <li>Expresa cómo te sentiste: <em>"Yo me sentí mal cuando…"</em></li>
+                                    <li>Escucha al otro sin interrumpir.</li>
+                                    <li>Busca una solución donde los dos ganen.</li>
+                                    <li>Si algo estuvo mal de tu parte, reconócelo.</li>
+                                    <li>Celebra haber manejado la situación con madurez.</li>
+                                </ul>
+                                <p style="margin-top:10px;"><em>Hablar también es una solución. Actúa con calma y respeto.</em></p>
+                            </div>
+                            <div id="consejo-inicio" style="color:#aaa;font-size:14px;padding:20px 0;text-align:center;">
+                                <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>
+                                Selecciona un color del semáforo para ver los consejos
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIDEBAR -->
+            <div class="columna-derecha">
+                <div class="sidebar-revista">
+                    <h3>¿Quiénes Somos?</h3>
+                    <p>Somos un grupo de estudiantes comprometidos con nuestro trabajo en equipo. Buscamos compartir conocimientos, demostrando que la educación también puede ser interesante e inspiradora. ¡Haz clic en nosotros para conocernos mejor!</p>
+                    <div class="grid-equipo-sidebar">
+                        <div class="miembro-card" onclick="mostrarPerfil('Noelia')">
+                            <div class="miembro-icon"><i class="fa-solid fa-user-tie"></i></div>
+                            <h4>Noelia Ruiz</h4><span>Coordinadora</span>
+                        </div>
+                        <div class="miembro-card" onclick="mostrarPerfil('Camila')">
+                            <div class="miembro-icon"><i class="fa-solid fa-camera-retro"></i></div>
+                            <h4>Camila Troya</h4><span>Fotógrafa</span>
+                        </div>
+                        <div class="miembro-card" onclick="mostrarPerfil('Estefania')">
+                            <div class="miembro-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                            <h4>Estefanny Caiza</h4><span>Marketing</span>
+                        </div>
+                        <div class="miembro-card" onclick="mostrarPerfil('Cristopher')">
+                            <div class="miembro-icon"><i class="fa-solid fa-pen-nib"></i></div>
+                            <h4>Cristopher Silva</h4><span>Editor</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN INFERIOR: CALIFICA LA REVISTA -->
+        <div class="seccion-inferior-equipo">
+            <h2>¡Califica nuestra Revista!</h2>
+            <p>Tu opinión nos ayuda a mejorar nuestro contenido educativo.</p>
+            <div class="estrellas">
+                <button onclick="calificar('revista', 1)">⭐</button>
+                <button onclick="calificar('revista', 2)">⭐</button>
+                <button onclick="calificar('revista', 3)">⭐</button>
+                <button onclick="calificar('revista', 4)">⭐</button>
+                <button onclick="calificar('revista', 5)">⭐</button>
+            </div>
+            <div style="margin-top:15px;border-top:1px solid #eee;padding-top:15px;">
+                <textarea id="comentarioRevista" rows="4" placeholder="¿Qué te pareció la revista en general? Déjanos tu comentario aquí..."></textarea>
+                <button class="btn-publicar" id="btn-enviar-revista" onclick="agregarComentarioRevista()">
+                    <i class="fa-regular fa-comment-dots"></i> Enviar Comentario
+                </button>
+            </div>
+            <div id="listaComentariosRevista" style="margin-top:20px;max-height:300px;overflow-y:auto;">
+                <div class="cargando-comentarios"><i class="fa-solid fa-spinner fa-spin"></i> Cargando comentarios...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== VISTA ENTREVISTA ===================== -->
+    <div id="vista-entrevista">
+        <button class="btn-volver" onclick="volverInicio()"><i class="fa-solid fa-arrow-left"></i> Volver a la portada</button>
+        <h2 style="text-align:center;margin-bottom:20px;font-size:32px;color:#333;">Entrevista: El uso de las Redes Sociales</h2>
+        <div class="video-container">
+            <video controls poster="portada.jpeg">
+                <source src="entrevista2.mp4" type="video/mp4">
+            </video>
+        </div>
+        <div class="qa-block">
+            <p class="pregunta"><strong>1. ¿Qué problemática observa en los adolescentes con las redes sociales?</strong></p>
+            <p class="respuesta">El problema radica en que muchas personas no saben usar correctamente las redes, hacen publicaciones sin pensar en las consecuencias. Estas pueden ser legales o psicológicas, e incluso provocar bullying. Es importante la supervisión de un adulto y educar en la huella digital.</p>
+        </div>
+        <div class="qa-block">
+            <p class="pregunta"><strong>2. ¿Cree que las redes sociales influyen en la toma de decisiones de los jóvenes?</strong></p>
+            <p class="respuesta">Sí, porque básicamente las redes sociales ahora están en todo lado. Por ejemplo, usted puede estar en un lugar y dice "no sé a dónde ir a comer", mira en TikTok y ya toma la decisión de irse a ese lugar. Lo mismo ocurre con tendencias de ropa, actitudes o formas de pensar.</p>
+        </div>
+        <div class="qa-block">
+            <p class="pregunta"><strong>3. ¿Cuáles son las consecuencias psicológicas de la exposición constante a internet?</strong></p>
+            <p class="respuesta">Una de las más graves es la ansiedad y la constante comparación. Los jóvenes ven vidas "perfectas" en internet y se frustran al compararlas con su realidad. Además, el ciberacoso es un riesgo constante que afecta profundamente la autoestima.</p>
+        </div>
+        <div class="qa-block">
+            <p class="pregunta"><strong>4. ¿Qué consejo le daría a los padres para manejar esta situación?</strong></p>
+            <p class="respuesta">La comunicación es clave. No se trata de prohibir por completo el uso del celular, sino de enseñar a usarlo. Establecer horarios, conocer las plataformas que usan sus hijos y fomentar actividades fuera de la pantalla son pasos fundamentales.</p>
+        </div>
+        <div class="interactivo-section">
+            <div style="display:flex;flex-direction:column;gap:10px;align-items:center;">
+                <h3 style="color:#333;font-size:24px;">¿Qué te pareció la Entrevista?</h3>
+                <div class="estrellas">
+                    <button onclick="calificar('entrevista', 1)">⭐</button>
+                    <button onclick="calificar('entrevista', 2)">⭐</button>
+                    <button onclick="calificar('entrevista', 3)">⭐</button>
+                    <button onclick="calificar('entrevista', 4)">⭐</button>
+                    <button onclick="calificar('entrevista', 5)">⭐</button>
+                </div>
+            </div>
+            <h4 style="margin:20px 0 10px 0;color:#555;">Deja un comentario sobre la entrevista:</h4>
+            <textarea id="comentarioEntrevista" rows="3" placeholder="Inicia sesión para dejar tu pregunta al entrevistado o tu opinión del video..."></textarea>
+            <button class="btn-publicar" id="btn-enviar-entrevista" onclick="agregarComentarioEntrevista()">
+                <i class="fa-solid fa-paper-plane"></i> Publicar en Entrevista
+            </button>
+            <div id="listaComentariosEntrevista" style="margin-top:20px;">
+                <div class="cargando-comentarios"><i class="fa-solid fa-spinner fa-spin"></i> Cargando comentarios...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== VISTA JUEGO ===================== -->
+    <div id="vista-juego">
+        <button class="btn-volver" onclick="volverInicio()"><i class="fa-solid fa-arrow-left"></i> Volver a la portada</button>
+        <h2 style="font-size:36px;color:#9c27b0;margin-bottom:5px;"><i class="fa-solid fa-puzzle-piece"></i> Sopa de Letras: Emociones</h2>
+        <p style="color:#555;margin-bottom:20px;font-size:16px;">Haz clic en cada letra que forme la palabra. Si es correcta, se pintará de verde.</p>
+        <div class="sopa-container">
+            <div class="grid-sopa" id="tablero-sopa"></div>
+            <div class="lista-palabras">
+                <h3>Encuentra:</h3>
+                <ul id="lista-emociones">
+                    <li id="item-ALEGRIA"><i class="fa-regular fa-square"></i> ALEGRIA</li>
+                    <li id="item-TRISTEZA"><i class="fa-regular fa-square"></i> TRISTEZA</li>
+                    <li id="item-ENOJO"><i class="fa-regular fa-square"></i> ENOJO</li>
+                    <li id="item-MIEDO"><i class="fa-regular fa-square"></i> MIEDO</li>
+                    <li id="item-ASCO"><i class="fa-regular fa-square"></i> ASCO</li>
+                </ul>
+                <button class="btn-limpiar" onclick="limpiarSopa()"><i class="fa-solid fa-eraser"></i> Borrar Selección</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL CÓMIC -->
+<div class="modal" id="modalComic">
+    <div class="modal-content">
+        <img src="comic.jpg" alt="Cómic completo">
+        <button class="btn-close" onclick="document.getElementById('modalComic').style.display='none'">
+            <i class="fa-solid fa-xmark"></i> Cerrar
+        </button>
+    </div>
+</div>
+
+<!-- MODAL LOGIN -->
+<div class="modal" id="loginModal">
+    <div class="modal-content">
+        <h2 style="margin-bottom:20px;color:#333;">Iniciar Sesión</h2>
+        <input type="email"    id="loginCorreo" placeholder="Tu Correo Electrónico">
+        <input type="password" id="loginClave"  placeholder="Tu Contraseña">
+        <button class="btn-blue"  onclick="login()">Entrar a mi cuenta</button>
+        <button class="btn-close" onclick="cerrarModales()">Cancelar</button>
+    </div>
+</div>
+
+<!-- MODAL REGISTRO -->
+<div class="modal" id="registroModal">
+    <div class="modal-content">
+        <h2 style="margin-bottom:20px;color:#333;">Crear Cuenta Nueva</h2>
+        <input type="text"     id="nombre" placeholder="Nombre y Apellido">
+        <input type="email"    id="correo" placeholder="Correo Electrónico">
+        <input type="password" id="clave"  placeholder="Crea una Contraseña">
+        <button class="btn-green" onclick="registrar()">Registrarme ahora</button>
+        <button class="btn-close" onclick="cerrarModales()">Cancelar</button>
+    </div>
+</div>
+
+<!-- MODAL PERFIL -->
+<div class="modal" id="perfilModal">
+    <div class="modal-content">
+        <img id="modalImg" src="" alt="Foto de perfil" class="img-perfil" onerror="this.src='https://via.placeholder.com/150/e91e63/ffffff?text=FOTO'">
+        <h2 id="modalNombre" style="color:#333;margin-bottom:5px;">Nombre</h2>
+        <p  id="modalRol"    class="rol-perfil">Rol</p>
+        <p  id="modalDesc"   class="desc-perfil">Descripción.</p>
+        <button class="btn-close" onclick="cerrarModales()">Cerrar Perfil</button>
+    </div>
+</div>
+
+<script>
+    // =============================================================
+    // ✅ CONFIGURACIÓN DE FIREBASE
+    // Reemplaza estos valores con los de tu proyecto en Firebase Console
+    // =============================================================
+    const firebaseConfig = {
+    apiKey:            "AIzaSyBS3Qev9z1k1mKvtVpGGQpUTz478BgSb18",
+    authDomain:        "sevysiones.firebaseapp.com",
+    projectId:         "sevysiones",
+    storageBucket:     "sevysiones.firebasestorage.app",
+    messagingSenderId: "17751191589",
+    appId:             "1:17751191589:web:ab3c1da987cd0725490fcc"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    // =============================================================
+
+    // --- ESTADO GLOBAL ---
+    let usuarioActual = null;
+
+    // --- BASE DE DATOS DEL EQUIPO ---
+    const equipoInfo = {
+        "Noelia":     { nombre: "Noelia Ruiz",        rol: "Coordinadora General",    img: "Noelia.jpeg",      desc: "Noelia es el pilar de SEVY SIONES. Se encarga de dirigir el proyecto, organizar las tareas del equipo y asegurar que cada sección de la revista funcione a la perfección y cumpla con nuestros estándares educativos." },
+        "Camila":     { nombre: "Camila Troya",        rol: "Directora de Fotografía", img: "CamilaTroya.jpeg", desc: "Con un ojo único para los detalles, Camila captura las mejores imágenes y brinda el aspecto visual y estético a nuestra revista, asegurándose de que cada artículo tenga el apoyo gráfico perfecto." },
+        "Estefania":  { nombre: "Estefanny    Caiza",  rol: "Jefa de Marketing",        img: "Estefanny.jpeg",   desc: "Estefanny es la especialista en conectar con nuestros lectores. Su misión principal es la difusión del contenido y crear estrategias para que nuestro mensaje educativo llegue e impacte a más jóvenes." },
+        "Cristopher": { nombre: "Cristopher Silva",    rol: "Editor Principal",         img: "Cristopher.jpeg",  desc: "El perfeccionista del grupo. Cristopher lee, revisa, corrige y maqueta absolutamente todos los textos de la revista para garantizar que la lectura sea fluida, profesional y sin errores." }
+    };
+
+    // --- NAVEGACIÓN ---
+    function ocultarTodo() {
+        document.getElementById('vista-principal-contenedor').style.display = 'none';
+        document.getElementById('vista-entrevista').style.display            = 'none';
+        document.getElementById('vista-juego').style.display                 = 'none';
+    }
+    function volverInicio() {
+        ocultarTodo();
+        document.getElementById('vista-principal-contenedor').style.display = 'block';
+        window.scrollTo(0, 0);
+    }
+    function abrirEntrevista() {
+        ocultarTodo();
+        document.getElementById('vista-entrevista').style.display = 'block';
+        window.scrollTo(0, 0);
+        cargarComentarios('entrevista');
+    }
+    function abrirJuego() {
+        ocultarTodo();
+        document.getElementById('vista-juego').style.display = 'block';
+        window.scrollTo(0, 0);
+        generarSopaSegura();
+    }
+
+    // --- PERFILES DEL EQUIPO ---
+    function mostrarPerfil(id) {
+        const d = equipoInfo[id];
+        document.getElementById('modalImg').src       = d.img;
+        document.getElementById('modalNombre').innerText = d.nombre;
+        document.getElementById('modalRol').innerText    = d.rol;
+        document.getElementById('modalDesc').innerText   = d.desc;
+        document.getElementById('perfilModal').style.display = 'flex';
+    }
+
+    // --- SISTEMA DE USUARIOS Y MODALES ---
+    function abrirLogin()    { document.getElementById("loginModal").style.display    = "flex"; }
+    function abrirRegistro() { document.getElementById("registroModal").style.display = "flex"; }
+    function cerrarModales() {
+        document.getElementById("loginModal").style.display    = "none";
+        document.getElementById("registroModal").style.display = "none";
+        document.getElementById("perfilModal").style.display   = "none";
+    }
+
+    function registrar() {
+        let usuarios = JSON.parse(localStorage.getItem("usuarios_sevy")) || [];
+        const nombre = document.getElementById("nombre").value.trim();
+        const correo = document.getElementById("correo").value.trim();
+        const clave  = document.getElementById("clave").value.trim();
+        if (!nombre || !correo || !clave) return alert("Por favor, completa todos los campos para registrarte.");
+        usuarios.push({ nombre, correo, clave });
+        localStorage.setItem("usuarios_sevy", JSON.stringify(usuarios));
+        alert("¡Cuenta creada con éxito! Ahora ya puedes iniciar sesión.");
+        cerrarModales();
+        document.getElementById("nombre").value = "";
+        document.getElementById("correo").value = "";
+        document.getElementById("clave").value  = "";
+    }
+
+    function login() {
+        let usuarios = JSON.parse(localStorage.getItem("usuarios_sevy")) || [];
+        const correo = document.getElementById("loginCorreo").value.trim();
+        const clave  = document.getElementById("loginClave").value.trim();
+        const usuario = usuarios.find(u => u.correo === correo && u.clave === clave);
+        if (usuario) {
+            usuarioActual = usuario;
+            actualizarInterfazUsuario();
+            cerrarModales();
+            document.getElementById("loginCorreo").value = "";
+            document.getElementById("loginClave").value  = "";
+        } else {
+            alert("El correo o la contraseña son incorrectos. Inténtalo de nuevo.");
+        }
+    }
+
+    function cerrarSesion() {
+        usuarioActual = null;
+        actualizarInterfazUsuario();
+    }
+
+    function actualizarInterfazUsuario() {
+        const saludo      = document.getElementById("saludoUsuario");
+        const btnLogin    = document.getElementById("btn-login");
+        const btnRegistro = document.getElementById("btn-registro");
+        const btnLogout   = document.getElementById("btn-logout");
+        if (usuarioActual) {
+            saludo.innerHTML          = `<i class="fa-solid fa-user-check"></i> Hola, ${usuarioActual.nombre}`;
+            saludo.style.display      = "inline-block";
+            btnLogin.style.display    = "none";
+            btnRegistro.style.display = "none";
+            btnLogout.style.display   = "inline-block";
+        } else {
+            saludo.style.display      = "none";
+            btnLogin.style.display    = "inline-block";
+            btnRegistro.style.display = "inline-block";
+            btnLogout.style.display   = "none";
+        }
+    }
+
+    // --- CALIFICACIONES ---
+    function calificar(tipo, valor) {
+        if (!usuarioActual) {
+            alert(`Necesitas iniciar sesión para calificar la ${tipo}.`);
+            abrirLogin();
+            return;
+        }
+        let baseDatos = JSON.parse(localStorage.getItem("bd_calificaciones_sevy")) || [];
+        baseDatos.push({ tipo_calificacion: tipo, usuario: usuarioActual.nombre, estrellas: valor, fecha: new Date().toLocaleDateString() });
+        localStorage.setItem("bd_calificaciones_sevy", JSON.stringify(baseDatos));
+        alert(`¡Gracias ${usuarioActual.nombre}! Hemos registrado tu calificación de ${valor} estrellas para la ${tipo}.`);
+    }
+
+    // =============================================================
+    // ✅ COMENTARIOS CON FIREBASE FIRESTORE
+    // Colecciones: "comentarios-revista" y "comentarios-entrevista"
+    // Cada documento tiene: nombre, texto, fecha, timestamp
+    // =============================================================
+
+    // HTML de un comentario
+    function htmlComentario(data) {
+        return `<div class="comentario">
+            <i class="fa-solid fa-circle-user" style="color:#2196f3;font-size:22px;margin-right:8px;vertical-align:middle;"></i>
+            <strong>${data.nombre} dijo:</strong><br><br>${data.texto}
+            <div class="comentario-fecha"><i class="fa-regular fa-clock"></i> ${data.fecha}</div>
+        </div>`;
+    }
+
+    // Lee los comentarios desde Firestore y los muestra
+    async function cargarComentarios(seccion) {
+        const coleccion    = 'comentarios-' + seccion;
+        const contenedorId = 'listaComentarios' + seccion.charAt(0).toUpperCase() + seccion.slice(1);
+        const contenedor   = document.getElementById(contenedorId);
+        if (!contenedor) return;
+
+        contenedor.innerHTML = '<div class="cargando-comentarios"><i class="fa-solid fa-spinner fa-spin"></i> Cargando comentarios...</div>';
+
+        try {
+            const snapshot = await db.collection(coleccion)
+                .orderBy('timestamp', 'desc')
+                .get();
+
+            if (snapshot.empty) {
+                contenedor.innerHTML = '<div class="cargando-comentarios"><i class="fa-regular fa-comment-dots"></i> Sé el primero en comentar.</div>';
+            } else {
+                contenedor.innerHTML = snapshot.docs.map(doc => htmlComentario(doc.data())).join('');
+            }
+        } catch (e) {
+            console.error("Error al cargar comentarios:", e);
+            contenedor.innerHTML = '<div class="cargando-comentarios" style="color:#f44336;">Error al cargar comentarios. Verifica tu conexión.</div>';
+        }
+    }
+
+    // Guarda un comentario en Firestore
+    async function guardarComentario(seccion, texto, btnId) {
+        const coleccion = 'comentarios-' + seccion;
+        const btn = document.getElementById(btnId);
+
+        // Deshabilitar botón mientras guarda
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...'; }
+
+        try {
+            await db.collection(coleccion).add({
+                nombre:    usuarioActual.nombre,
+                texto:     texto,
+                fecha:     new Date().toLocaleString('es-EC', { dateStyle: 'medium', timeStyle: 'short' }),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Recargar lista
+            await cargarComentarios(seccion);
+
+        } catch (e) {
+            console.error("Error al guardar comentario:", e);
+            alert("No se pudo guardar el comentario. Verifica tu conexión a Firebase.");
+        } finally {
+            // Rehabilitar botón
+            if (btn) {
+                btn.disabled = false;
+                if (seccion === 'revista') {
+                    btn.innerHTML = '<i class="fa-regular fa-comment-dots"></i> Enviar Comentario';
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Publicar en Entrevista';
+                }
+            }
+        }
+    }
+
+    // Botón Revista
+    async function agregarComentarioRevista() {
+        if (!usuarioActual) {
+            alert("¡Inicia sesión para dejar tu comentario sobre la revista!");
+            abrirLogin();
+            return;
+        }
+        const texto = document.getElementById("comentarioRevista").value.trim();
+        if (!texto) return;
+        document.getElementById("comentarioRevista").value = "";
+        await guardarComentario('revista', texto, 'btn-enviar-revista');
+    }
+
+    // Botón Entrevista
+    async function agregarComentarioEntrevista() {
+        if (!usuarioActual) {
+            alert("¡Inicia sesión para dejar tu comentario en la entrevista!");
+            abrirLogin();
+            return;
+        }
+        const texto = document.getElementById("comentarioEntrevista").value.trim();
+        if (!texto) return;
+        document.getElementById("comentarioEntrevista").value = "";
+        await guardarComentario('entrevista', texto, 'btn-enviar-entrevista');
+    }
+
+    // --- SEMÁFORO ---
+    function verConsejo(color) {
+        document.getElementById('consejo-inicio').style.display = 'none';
+        ['rojo', 'amarillo', 'verde'].forEach(function(c) {
+            const el = document.getElementById('consejo-' + c);
+            if (c === color) {
+                if (el.classList.contains('activo')) {
+                    el.classList.remove('activo');
+                    document.getElementById('consejo-inicio').style.display = 'block';
+                } else {
+                    el.classList.add('activo');
+                    setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 80);
+                }
+            } else {
+                el.classList.remove('activo');
+            }
+        });
+    }
+
+    // --- SOPA DE LETRAS ---
+    const sopaEstructura = [
+        ['A','L','E','G','R','I','A','P','Z','M'],
+        ['X','R','Y','T','U','I','O','L','K','I'],
+        ['A','S','C','O','Q','W','E','R','T','E'],
+        ['P','O','I','U','Y','T','R','E','W','D'],
+        ['E','N','O','J','O','L','K','J','H','O'],
+        ['M','N','B','V','C','X','Z','A','S','D'],
+        ['T','R','I','S','T','E','Z','A','Q','W'],
+        ['P','O','I','U','Y','T','R','E','W','Q'],
+        ['L','K','J','H','G','F','D','S','A','Z'],
+        ['X','C','V','B','N','M','Q','W','E','R']
+    ];
+    const palabrasObjetivo = {
+        "ALEGRIA":  ["0-0","0-1","0-2","0-3","0-4","0-5","0-6"],
+        "ASCO":     ["2-0","2-1","2-2","2-3"],
+        "ENOJO":    ["4-0","4-1","4-2","4-3","4-4"],
+        "TRISTEZA": ["6-0","6-1","6-2","6-3","6-4","6-5","6-6","6-7"],
+        "MIEDO":    ["0-9","1-9","2-9","3-9","4-9"]
+    };
+    let celdasSeleccionadas = [];
+    let sopaYaGenerada = false;
+
+    function generarSopaSegura() {
+        if (sopaYaGenerada) return;
+        const tablero = document.getElementById("tablero-sopa");
+        tablero.innerHTML = "";
+        for (let f = 0; f < 10; f++) {
+            for (let c = 0; c < 10; c++) {
+                let div = document.createElement("div");
+                div.className = "letra-box";
+                div.id        = `celda-${f}-${c}`;
+                div.innerText = sopaEstructura[f][c];
+                div.addEventListener('click', (function(fila, col) {
+                    return function() { manejarClicLetra(this, fila, col); };
+                })(f, c));
+                tablero.appendChild(div);
+            }
+        }
+        sopaYaGenerada = true;
+    }
+
+    function manejarClicLetra(elemento, fila, col) {
+        if (elemento.classList.contains("encontrada")) return;
+        const id = `${fila}-${col}`;
+        if (celdasSeleccionadas.includes(id)) {
+            celdasSeleccionadas = celdasSeleccionadas.filter(c => c !== id);
+            elemento.classList.remove("seleccionada");
+        } else {
+            celdasSeleccionadas.push(id);
+            elemento.classList.add("seleccionada");
+        }
+        comprobarPalabra();
+    }
+
+    function comprobarPalabra() {
+        let selStr = [...celdasSeleccionadas].sort().join("|");
+        for (let palabra in palabrasObjetivo) {
+            let objStr = [...palabrasObjetivo[palabra]].sort().join("|");
+            if (selStr === objStr) {
+                celdasSeleccionadas.forEach(id => {
+                    let celda = document.getElementById(`celda-${id}`);
+                    celda.classList.remove("seleccionada");
+                    celda.classList.add("encontrada");
+                });
+                const item = document.getElementById(`item-${palabra}`);
+                item.innerHTML = `<i class="fa-solid fa-square-check" style="color:#4caf50;font-size:20px;"></i> <span style="text-decoration:line-through;color:#4caf50;font-weight:bold;">${palabra}</span>`;
+                celdasSeleccionadas = [];
+                return;
+            }
+        }
+    }
+
+    function limpiarSopa() {
+        document.querySelectorAll(".letra-box").forEach(letra => {
+            if (!letra.classList.contains("encontrada")) letra.classList.remove("seleccionada");
+        });
+        celdasSeleccionadas = [];
+    }
+
+    // --- INICIO ---
+    window.onload = function() {
+        actualizarInterfazUsuario();
+        cargarComentarios('revista');
+    };
+</script>
+
+</body>
+</html>
